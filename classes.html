@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classes - School Fee Management System</title>
+  <link rel="stylesheet" href="SFM.css">
+  <style>
+    #classModal { display: none; }
+    .footer-controls {
+      background: #ecf0f1;
+      padding: 8px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .footer-school-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2c3e50;
+      text-align: center;
+    }
+    body { background: #f9f9f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-content { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 48px; }
+    h2 { color: #34495e; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #ecf0f1; }
+    .add-btn { background: #34495e; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .add-btn:hover { background: #2c3e50; }
+    .topnav {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      background-color: #34495e;
+      padding: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topnav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      outline: none;
+      border-radius: 0;
+    }
+    .topnav button:hover, .topnav button.active {
+      background-color: #2c3e50;
+      color: #ffd700;
+    }
+    .modal-content h3 { margin-bottom: 18px; color: #34495e; }
+    .modal-content label { display: block; margin: 10px 0 4px; }
+    .modal-content input {
+      width: 100%; padding: 7px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-actions button { padding: 7px 16px; border-radius: 4px; border: none; cursor: pointer; }
+    .modal-actions .save-btn { background: #34495e; color: #fff; }
+    .modal-actions .cancel-btn { background: #eee; color: #34495e; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <button onclick="location.href='SFM.html'">Home</button>
+    <button onclick="location.href='students.html'">Students</button>
+    <button onclick="location.href='staff.html'">Staff</button>
+    <button class="active">Classes</button>
+    <button onclick="location.href='bus.html'">Bus</button>
+    <button onclick="location.href='fee.html'">Fee</button>
+  </nav>
+  <div class="main-content">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+      <h2 style="margin: 0;">Classes</h2>
+      <button class="add-btn" id="openClassModalBtn" style="padding: 10px 24px; font-size: 16px;">+ Add Class</button>
+    </div>
+    <table id="classTable">
+      <tr><th>Class</th><th>Section</th><th>Class Teacher</th><th>Actions</th></tr>
+      <tr><td>10</td><td>A</td><td>Meera Das</td><td></td></tr>
+      <tr><td>9</td><td>B</td><td>Rahul Menon</td><td></td></tr>
+    </table>
+    <div id="classModal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100vw; height: 100vh; overflow: auto; background: rgba(44,62,80,0.12);">
+      <div class="modal-content" style="background: #fff; margin: 80px auto; padding: 32px 32px 24px 32px; border-radius: 8px; max-width: 400px; box-shadow: 0 2px 16px rgba(44,62,80,0.12); position: relative;">
+        <h3 id="modalTitle">Add Class</h3>
+        <form id="classForm">
+          <label for="className">Class Name</label>
+          <input type="text" id="className" name="className" required>
+          <label for="section">Section</label>
+          <input type="text" id="section" name="section" required>
+          <label for="teacher">Class Teacher</label>
+          <input type="text" id="teacher" name="teacher" required>
+          <div class="modal-actions" style="margin-top: 18px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="cancel-btn">Cancel</button>
+            <button type="submit" class="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+<script>
+
+const openModalBtn = document.getElementById('openClassModalBtn');
+const classModal = document.getElementById('classModal');
+const classForm = document.getElementById('classForm');
+const modalTitle = document.getElementById('modalTitle');
+const classTable = document.getElementById('classTable');
+let editRow = null;
+
+function closeModal() {
+  classModal.style.display = 'none';
+  classForm.reset();
+  editRow = null;
+  modalTitle.textContent = 'Add Class';
+}
+
+function openModal() {
+  classModal.style.display = 'block';
+}
+
+openModalBtn.onclick = openModal;
+classModal.querySelector('.cancel-btn').onclick = closeModal;
+
+function addActionListeners(row) {
+  const actionsCell = row.children[3];
+  actionsCell.innerHTML = '<button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button>';
+  const editBtn = actionsCell.querySelector('.edit-btn');
+  const deleteBtn = actionsCell.querySelector('.delete-btn');
+  editBtn.onclick = function() {
+    // Fill form with row data for editing
+    const cells = row.children;
+    classForm.className.value = cells[0].innerText;
+    classForm.section.value = cells[1].innerText;
+    classForm.teacher.value = cells[2].innerText;
+    editRow = row;
+    modalTitle.textContent = 'Edit Class';
+    openModal();
+  };
+  deleteBtn.onclick = function() {
+    row.remove();
+  };
+}
+
+// Add listeners to initial table rows
+Array.from(classTable.rows).forEach((tr, i) => {
+  if (i === 0) return; // skip header
+  addActionListeners(tr);
+});
+
+classForm.onsubmit = function(e) {
+  e.preventDefault();
+  const className = classForm.className.value.trim();
+  const section = classForm.section.value.trim();
+  const teacher = classForm.teacher.value.trim();
+  if (!className || !section || !teacher) return;
+  if (editRow) {
+    editRow.children[0].innerText = className;
+    editRow.children[1].innerText = section;
+    editRow.children[2].innerText = teacher;
+    editRow = null;
+    modalTitle.textContent = 'Add Class';
+  } else {
+    const row = classTable.insertRow(-1);
+    row.insertCell(0).innerText = className;
+    row.insertCell(1).innerText = section;
+    row.insertCell(2).innerText = teacher;
+    row.insertCell(3);
+    addActionListeners(row);
+  }
+  classForm.reset();
+  closeModal();
+};
+</script>
+</script>
+</body>
+</html>

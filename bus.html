@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bus - School Fee Management System</title>
+  <link rel="stylesheet" href="SFM.css">
+  <style>
+    .footer-controls {
+      background: #ecf0f1;
+      padding: 8px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .footer-school-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2c3e50;
+      text-align: center;
+    }
+    body { background: #f9f9f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    .topnav {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      background-color: #34495e;
+      padding: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topnav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      outline: none;
+      border-radius: 0;
+    }
+    .topnav button:hover, .topnav button.active {
+      background-color: #2c3e50;
+      color: #ffd700;
+    }
+    .main-content { max-width: 1600px; margin: 48px auto; background: #fff; border-radius: 12px; box-shadow: 0 0 16px rgba(0,0,0,0.07); padding: 64px; }
+    h2 { color: #34495e; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #ecf0f1; }
+    .add-btn { background: #34495e; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .add-btn:hover { background: #2c3e50; }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.3);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 24px 32px;
+      border-radius: 8px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+      min-width: 320px;
+      max-width: 90vw;
+    }
+    .modal-content h3 { margin-bottom: 18px; color: #34495e; }
+    .modal-content label { display: block; margin: 10px 0 4px; }
+    .modal-content input {
+      width: 100%; padding: 7px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-actions button { padding: 7px 16px; border-radius: 4px; border: none; cursor: pointer; }
+    .modal-actions .save-btn { background: #34495e; color: #fff; }
+    .modal-actions .cancel-btn { background: #eee; color: #34495e; }
+    .footer-controls {
+      background: #ecf0f1;
+      padding: 8px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100vw;
+      z-index: 100;
+    }
+    .footer-school-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2c3e50;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <button onclick="location.href='SFM.html'">Home</button>
+    <button onclick="location.href='students.html'">Students</button>
+    <button onclick="location.href='staff.html'">Staff</button>
+    <button onclick="location.href='classes.html'">Classes</button>
+    <button class="active">Bus</button>
+    <button onclick="location.href='fee.html'">Fee</button>
+  </nav>
+  <div class="main-content">
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+      <h2 style="margin: 0;">Bus</h2>
+      <span style="flex:1 1 auto;"></span>
+      <button class="add-btn" id="addBusBtn">+ Add Bus</button>
+    </div>
+    <table>
+      <tr><th>Bus No</th><th>Route</th><th>Driver</th><th>Actions</th></tr>
+      <!-- Example row -->
+      <tr>
+        <td>1</td><td>Kuttippuram - Valanchery</td><td>Mr. Rahim</td>
+        <td></td>
+      </tr>
+    </table>
+    <!-- Modal for adding/editing bus record -->
+    <div class="modal" id="busModal">
+      <div class="modal-content">
+        <h3>Add Bus</h3>
+        <form id="busForm">
+          <label for="busNo">Bus No</label>
+          <input type="text" id="busNo" name="busNo" required>
+          <label for="route">Route</label>
+          <input type="text" id="route" name="route" required>
+          <label for="driver">Driver</label>
+          <input type="text" id="driver" name="driver" required>
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn" id="cancelBusModal">Cancel</button>
+            <button type="submit" class="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+<script>
+// Modal open/close logic for bus
+const addBtn = document.getElementById('addBusBtn');
+const modal = document.getElementById('busModal');
+const cancelBtn = document.getElementById('cancelBusModal');
+const form = document.getElementById('busForm');
+
+addBtn.onclick = () => {
+  form.reset();
+  modal.style.display = 'flex';
+  form.onsubmit = defaultSubmit;
+};
+cancelBtn.onclick = () => { modal.style.display = 'none'; };
+window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+function addActionListeners(row) {
+  const actionsCell = row.children[3];
+  actionsCell.innerHTML = '<button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button>';
+  const editBtn = actionsCell.querySelector('.edit-btn');
+  const deleteBtn = actionsCell.querySelector('.delete-btn');
+  editBtn.onclick = function() {
+    // Fill modal with row data
+    const cells = row.children;
+    form.busNo.value = cells[0].innerText;
+    form.route.value = cells[1].innerText;
+    form.driver.value = cells[2].innerText;
+    modal.style.display = 'flex';
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      cells[0].innerText = form.busNo.value.trim();
+      cells[1].innerText = form.route.value.trim();
+      cells[2].innerText = form.driver.value.trim();
+      modal.style.display = 'none';
+      form.reset();
+      form.onsubmit = defaultSubmit;
+    };
+  };
+  deleteBtn.onclick = function() {
+    row.remove();
+  };
+}
+
+function defaultSubmit(e) {
+  e.preventDefault();
+  const busNo = form.busNo.value.trim();
+  const route = form.route.value.trim();
+  const driver = form.driver.value.trim();
+  if (!busNo || !route || !driver) return;
+  const table = document.querySelector('table');
+  const row = table.insertRow(-1);
+  row.insertCell(0).innerText = busNo;
+  row.insertCell(1).innerText = route;
+  row.insertCell(2).innerText = driver;
+  row.insertCell(3);
+  addActionListeners(row);
+  form.reset();
+  modal.style.display = 'none';
+}
+
+// Add listeners to initial table rows
+document.querySelectorAll('table tr').forEach((tr, i) => {
+  if (i === 0) return; // skip header
+  addActionListeners(tr);
+});
+</script>
+</body>
+</html>
