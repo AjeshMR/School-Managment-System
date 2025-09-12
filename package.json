@@ -1,0 +1,26 @@
+{
+  "name": "school-managment-system",
+  "version": "1.0.0",
+  "description": "easy to use and open",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AjeshMR/School-Managment-System.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AjeshMR/School-Managment-System/issues"
+  },
+  "homepage": "https://github.com/AjeshMR/School-Managment-System#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "json2csv": "^6.0.0-alpha.2",
+    "sqlite3": "^5.1.7"
+  }
+}

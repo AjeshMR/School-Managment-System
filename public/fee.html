@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment - School Fee Management System</title>
+  <style>
+    body { background: #f9f9f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-content { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 48px; }
+    h2 { color: #34495e; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #ecf0f1; }
+    .add-btn, .generate-btn { background: #34495e; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .add-btn:hover, .generate-btn:hover { background: #2c3e50; }
+    .topnav {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      background-color: #34495e;
+      padding: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topnav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      outline: none;
+      border-radius: 0;
+    }
+    .topnav button:hover, .topnav button.active {
+      background-color: #2c3e50;
+      color: #ffd700;
+    }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; }
+    .modal-content { background: #fff; padding: 24px 32px; border-radius: 8px; box-shadow: 0 2px 16px rgba(0,0,0,0.2); min-width: 320px; max-width: 90vw; }
+    .modal-content h3 { margin-bottom: 18px; color: #34495e; }
+    .modal-content label { display: block; margin: 10px 0 4px; }
+    .modal-content input, .modal-content select { width: 100%; padding: 7px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-actions button { padding: 7px 16px; border-radius: 4px; border: none; cursor: pointer; }
+    .modal-actions .save-btn { background: #34495e; color: #fff; }
+    .modal-actions .cancel-btn { background: #eee; color: #34495e; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <button onclick="location.href='SFM.html'">Home</button>
+    <button onclick="location.href='students.html'">Students</button>
+    <button onclick="location.href='students_archived.html'">Archived Students</button>
+    <button onclick="location.href='staff.html'">Staff</button>
+    <button onclick="location.href='staff_archived.html'">Archived Staff</button>
+    <button onclick="location.href='classes.html'">Classes</button>
+    <button onclick="location.href='bus.html'">Bus Routes</button>
+    <button onclick="location.href='bus_stops.html'">Bus Stops</button>
+    <button class="active">Payment</button>
+    <button onclick="location.href='fee_structure.html'">Fee Structure</button>
+  </nav>
+  <div class="main-content">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+      <h2 style="margin: 0;">Student Fees</h2>
+      <div>
+        <a href="/api/reports/unpaid/export" class="generate-btn" style="text-decoration: none;">Export Unpaid (CSV)</a>
+        <button class="generate-btn" id="generateFeesBtn">Generate Fees</button>
+        <button class="add-btn" id="addFeeBtn">+ Add Fee Record</button>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Student</th><th>Class</th><th>Fee Type</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <!-- Fee records will be inserted here dynamically -->
+      </tbody>
+    </table>
+
+    <div class="modal" id="feeModal">
+      <div class="modal-content">
+        <h3 id="modalTitle">Add Fee Record</h3>
+        <form id="feeForm">
+          <input type="hidden" id="feeId" name="feeId">
+          <label for="studentId">Student</label>
+          <select id="studentId" name="studentId" required></select>
+          <label for="feeType">Fee Type</label>
+          <input type="text" id="feeType" name="feeType" required>
+          <label for="amount">Amount</label>
+          <input type="number" id="amount" name="amount" required>
+          <label for="status">Status</label>
+          <select id="status" name="status" required>
+            <option value="Paid">Paid</option>
+            <option value="Unpaid">Unpaid</option>
+          </select>
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn" id="cancelFeeModal">Cancel</button>
+            <button type="submit" class="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal" id="generateFeesModal">
+        <div class="modal-content">
+            <h3>Generate Fees</h3>
+            <form id="generateFeesForm">
+                <label for="generateFeeType">Fee Type</label>
+                <select id="generateFeeType" name="generateFeeType" required>
+                    <option value="">Select a fee type</option>
+                    <option value="Tuition">Tuition</option>
+                    <option value="Bus Fee">Bus Fee</option>
+                </select>
+                <div id="tuitionFields">
+                    <label for="structureId">Fee Structure</label>
+                    <select id="structureId" name="structureId"></select>
+                    <label for="classId">For Class</label>
+                    <select id="classId" name="classId"></select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" id="cancelGenerateFeesModal">Cancel</button>
+                    <button type="submit" class="save-btn">Generate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadFees();
+    loadStudents();
+    loadFeeStructures();
+    loadClasses();
+
+    const generateFeeType = document.getElementById('generateFeeType');
+    const tuitionFields = document.getElementById('tuitionFields');
+    generateFeeType.onchange = () => {
+        tuitionFields.style.display = generateFeeType.value === 'Tuition' ? 'block' : 'none';
+    };
+    generateFeeType.onchange(); // Trigger on load
+});
+
+function loadFees() {
+    fetch('/api/fees')
+        .then(response => response.json())
+        .then(result => {
+            const tbody = document.querySelector('table tbody');
+            tbody.innerHTML = '';
+            result.data.forEach(fee => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = fee.student_name;
+                row.insertCell(1).innerText = fee.student_class;
+                row.insertCell(2).innerText = fee.fee_type;
+                row.insertCell(3).innerText = fee.amount;
+                row.insertCell(4).innerText = fee.status;
+                
+                const actionsCell = row.insertCell(5);
+                const editBtn = document.createElement('button');
+                editBtn.innerText = 'Edit';
+                editBtn.onclick = () => openEditModal(fee);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerText = 'Delete';
+                deleteBtn.onclick = () => deleteFee(fee.id);
+                actionsCell.appendChild(editBtn);
+                actionsCell.appendChild(deleteBtn);
+            });
+        });
+}
+
+function loadStudents() {
+    fetch('/api/students').then(res => res.json()).then(result => {
+        const select = document.getElementById('studentId');
+        select.innerHTML = '<option value="">Select a student</option>';
+        result.data.forEach(student => {
+            const option = document.createElement('option');
+            option.value = student.id;
+            option.innerText = `${student.name} (${student.class_name})`;
+            select.appendChild(option);
+        });
+    });
+}
+
+function loadFeeStructures() {
+    fetch('/api/fee-structures').then(res => res.json()).then(result => {
+        const select = document.getElementById('structureId');
+        select.innerHTML = '<option value="">Select a fee structure</option>';
+        result.data.forEach(structure => {
+            const option = document.createElement('option');
+            option.value = structure.id;
+            option.innerText = `${structure.fee_type} (${structure.class_name}) - ${structure.amount}`;
+            select.appendChild(option);
+        });
+    });
+}
+
+function loadClasses() {
+    fetch('/api/classes').then(res => res.json()).then(result => {
+        const select = document.getElementById('classId');
+        select.innerHTML = '<option value="">Select a class</option>';
+        result.data.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c.id;
+            option.innerText = `${c.class_name} ${c.section}`;
+            select.appendChild(option);
+        });
+    });
+}
+
+const feeModal = document.getElementById('feeModal');
+const feeForm = document.getElementById('feeForm');
+const cancelFeeModal = document.getElementById('cancelFeeModal');
+
+document.getElementById('addFeeBtn').onclick = () => {
+    feeForm.reset();
+    document.getElementById('feeId').value = '';
+    document.getElementById('modalTitle').innerText = 'Add Fee Record';
+    feeModal.style.display = 'flex';
+};
+
+cancelFeeModal.onclick = () => { feeModal.style.display = 'none'; };
+
+window.onclick = (e) => {
+    if (e.target === feeModal) feeModal.style.display = 'none';
+    if (e.target === generateFeesModal) generateFeesModal.style.display = 'none';
+};
+
+function openEditModal(fee) {
+    feeForm.reset();
+    document.getElementById('feeId').value = fee.id;
+    document.getElementById('studentId').value = fee.student_id;
+    document.getElementById('feeType').value = fee.fee_type;
+    document.getElementById('amount').value = fee.amount;
+    document.getElementById('status').value = fee.status;
+    document.getElementById('modalTitle').innerText = 'Edit Fee Record';
+    feeModal.style.display = 'flex';
+}
+
+function deleteFee(feeId) {
+    if (confirm('Are you sure you want to delete this fee record?')) {
+        fetch(`/api/fees/${feeId}`, { method: 'DELETE' }).then(() => loadFees());
+    }
+}
+
+feeForm.onsubmit = function(e) {
+    e.preventDefault();
+    const feeId = document.getElementById('feeId').value;
+    const feeData = {
+        student_id: document.getElementById('studentId').value,
+        fee_type: document.getElementById('feeType').value,
+        amount: document.getElementById('amount').value,
+        status: document.getElementById('status').value
+    };
+    const method = feeId ? 'PUT' : 'POST';
+    const url = feeId ? `/api/fees/${feeId}` : '/api/fees';
+    fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(feeData) })
+        .then(() => { feeModal.style.display = 'none'; loadFees(); });
+};
+
+// Generate Fees Modal
+const generateFeesModal = document.getElementById('generateFeesModal');
+const generateFeesForm = document.getElementById('generateFeesForm');
+const cancelGenerateFeesModal = document.getElementById('cancelGenerateFeesModal');
+
+document.getElementById('generateFeesBtn').onclick = () => {
+    generateFeesForm.reset();
+    generateFeesModal.style.display = 'flex';
+};
+
+cancelGenerateFeesModal.onclick = () => { generateFeesModal.style.display = 'none'; };
+
+generateFeesForm.onsubmit = function(e) {
+    e.preventDefault();
+    const feeType = document.getElementById('generateFeeType').value;
+    let url, body;
+
+    if (feeType === 'Tuition') {
+        url = '/api/fees/generate-tuition';
+        body = JSON.stringify({
+            structure_id: document.getElementById('structureId').value,
+            class_id: document.getElementById('classId').value
+        });
+    } else if (feeType === 'Bus Fee') {
+        url = '/api/fees/generate-bus-fees';
+        body = JSON.stringify({});
+    } else {
+        return alert('Please select a valid fee type.');
+    }
+
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+        .then(response => response.json())
+        .then(result => {
+            alert(result.message || 'Fees generated.');
+            generateFeesModal.style.display = 'none';
+            loadFees();
+        }).catch(err => {
+            console.error(err);
+            alert('Error generating fees.');
+        });
+};
+</script>
+</body>
+</html>
