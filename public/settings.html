@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - School Fee Management System</title>
+  <style>
+    body { background: #f9f9f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-content { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 48px; }
+    .topnav {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      background-color: #34495e;
+      padding: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topnav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      outline: none;
+      border-radius: 0;
+    }
+    .topnav button:hover, .topnav button.active {
+      background-color: #2c3e50;
+      color: #ffd700;
+    }
+    .tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 24px; }
+    .tab-button { background: #eee; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; border-radius: 4px 4px 0 0; }
+    .tab-button.active { background: #fff; border: 1px solid #ccc; border-bottom: 1px solid #fff; margin-bottom: -1px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    input, button { padding: 8px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <button onclick="location.href='SFM.html'">Home</button>
+    <button onclick="location.href='students.html'">Students</button>
+    <button onclick="location.href='staff.html'">Staff</button>
+    <button class="active">Settings</button>
+  </nav>
+  <div class="main-content">
+    <div class="tabs">
+      <button class="tab-button active" onclick="openTab(event, 'General')">General</button>
+      <button class="tab-button" onclick="openTab(event, 'Classes')">Classes & Sections</button>
+      <button class="tab-button" onclick="open.openTab(event, 'Roles')">Staff Roles</button>
+      <button class="tab-button" onclick="openTab(event, 'FeeStructures')">Fee Structures</button>
+    </div>
+
+    <div id="General" class="tab-content active">
+      <h2>General Settings</h2>
+      <form id="generalSettingsForm">
+        <label for="schoolName">School Name</label>
+        <input type="text" id="schoolName" name="schoolName" style="width: 400px;">
+        <button type="submit">Save</button>
+      </form>
+    </div>
+
+    <div id="Classes" class="tab-content">
+      <h2>Classes & Sections</h2>
+      <div style="display: flex; gap: 40px;">
+        <div style="flex: 1;">
+          <h3>All Classes</h3>
+          <div id="classesList"></div>
+          <form id="addClassForm">
+            <input type="text" id="newClassName" placeholder="New class name (e.g., 10th Grade)" required>
+            <button type="submit">+ Add Class</button>
+          </form>
+        </div>
+        <div style="flex: 2;">
+          <h3>Sections</h3>
+          <select id="classFilter"></select>
+          <div id="sectionsList"></div>
+          <form id="addSectionForm">
+            <input type="text" id="newSectionName" placeholder="New section name (e.g., A)" required>
+            <select id="teacherId"></select>
+            <button type="submit">+ Add Section</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="Roles" class="tab-content">
+      <h2>Staff Roles</h2>
+      <!-- Staff Role management UI will go here -->
+    </div>
+
+    <div id="FeeStructures" class="tab-content">
+      <h2>Fee Structures</h2>
+      <div id="feeStructuresList"></div>
+      <form id="addFeeStructureForm">
+        <select id="feeStructureClassId"></select>
+        <input type="text" id="newFeeType" placeholder="Fee type (e.g., Tuition)" required>
+        <input type="number" id="newFeeAmount" placeholder="Amount" required>
+        <button type="submit">+ Add Fee Structure</button>
+      </form>
+    </div>
+  </div>
+
+<script>
+function openTab(evt, tabName) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tab-content");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tab-button");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(tabName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // General Settings
+    const generalSettingsForm = document.getElementById('generalSettingsForm');
+    const schoolNameInput = document.getElementById('schoolName');
+    fetch('/api/settings').then(res => res.json()).then(settings => { schoolNameInput.value = settings.school_name; });
+    generalSettingsForm.onsubmit = (e) => {
+        e.preventDefault();
+        fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ school_name: schoolNameInput.value }) })
+            .then(() => alert('School name updated!'));
+    };
+
+    // Staff Roles
+    const rolesList = document.getElementById('rolesList');
+    const addRoleForm = document.getElementById('addRoleForm');
+    const newRoleNameInput = document.getElementById('newRoleName');
+    function loadRoles() {
+        fetch('/api/staff-roles').then(res => res.json()).then(result => {
+            rolesList.innerHTML = '<ul>';
+            result.data.forEach(role => {
+                rolesList.innerHTML += `<li>${role.role_name} <button onclick="deleteRole(${role.id})">Delete</button></li>`;
+            });
+            rolesList.innerHTML += '</ul>';
+        });
+    }
+    window.deleteRole = (id) => {
+        if (confirm('Are you sure?')) fetch(`/api/staff-roles/${id}`, { method: 'DELETE' }).then(loadRoles);
+    };
+    addRoleForm.onsubmit = (e) => {
+        e.preventDefault();
+        fetch('/api/staff-roles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role_name: newRoleNameInput.value }) })
+            .then(() => { newRoleNameInput.value = ''; loadRoles(); });
+    };
+    loadRoles();
+
+    // Classes & Sections
+    const classesList = document.getElementById('classesList');
+    const addClassForm = document.getElementById('addClassForm');
+    const newClassNameInput = document.getElementById('newClassName');
+    const classFilter = document.getElementById('classFilter');
+    const sectionsList = document.getElementById('sectionsList');
+    const addSectionForm = document.getElementById('addSectionForm');
+    const newSectionNameInput = document.getElementById('newSectionName');
+    const teacherIdSelect = document.getElementById('teacherId');
+    const feeStructureClassIdSelect = document.getElementById('feeStructureClassId');
+
+    function loadTeachers() {
+        fetch('/api/staff').then(res => res.json()).then(result => {
+            teacherIdSelect.innerHTML = '<option value="">Assign a teacher</option>';
+            result.data.filter(s => s.role_id === 1).forEach(teacher => { // Assuming role_id 1 is Teacher
+                const option = document.createElement('option');
+                option.value = teacher.id;
+                option.textContent = teacher.name;
+                teacherIdSelect.appendChild(option);
+            });
+        });
+    }
+
+    function loadSections(classId) {
+        sectionsList.innerHTML = '';
+        if (!classId) return;
+        fetch(`/api/sections?class_id=${classId}`).then(res => res.json()).then(result => {
+            result.data.forEach(section => {
+                const div = document.createElement('div');
+                div.innerHTML = `${section.section_name} - (Teacher: ${section.teacher_name || 'Unassigned'}) <button onclick="deleteSection(${section.id})">Delete</button>`;
+                sectionsList.appendChild(div);
+            });
+        });
+    }
+    window.deleteSection = (id) => {
+        if(confirm('Are you sure?')) fetch(`/api/sections/${id}`, { method: 'DELETE' }).then(() => loadSections(classFilter.value));
+    };
+
+    function loadClasses() {
+        fetch('/api/classes').then(res => res.json()).then(result => {
+            classesList.innerHTML = '';
+            classFilter.innerHTML = '<option value="">Select a class</option>';
+            feeStructureClassIdSelect.innerHTML = '<option value="">Select a class</option>';
+            result.data.forEach(cls => {
+                const div = document.createElement('div');
+                div.innerHTML = `${cls.name} <button onclick="deleteClass(${cls.id})">Delete</button>`;
+                classesList.appendChild(div);
+                const option = document.createElement('option');
+                option.value = cls.id;
+                option.textContent = cls.name;
+                classFilter.appendChild(option.cloneNode(true));
+                feeStructureClassIdSelect.appendChild(option.cloneNode(true));
+            });
+            loadSections(classFilter.value);
+        });
+    }
+    window.deleteClass = (id) => {
+        if(confirm('Are you sure?')) fetch(`/api/classes/${id}`, { method: 'DELETE' }).then(loadClasses);
+    };
+
+    addClassForm.onsubmit = (e) => {
+        e.preventDefault();
+        fetch('/api/classes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newClassNameInput.value }) })
+            .then(() => { newClassNameInput.value = ''; loadClasses(); });
+    };
+
+    addSectionForm.onsubmit = (e) => {
+        e.preventDefault();
+        const classId = classFilter.value;
+        if (!classId) return alert('Please select a class first.');
+        const sectionData = { class_id: classId, section_name: newSectionNameInput.value, teacher_id: teacherIdSelect.value };
+        fetch('/api/sections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sectionData) })
+            .then(() => { newSectionNameInput.value = ''; teacherIdSelect.value = ''; loadSections(classId); });
+    };
+
+    classFilter.onchange = () => loadSections(classFilter.value);
+
+    // Fee Structures
+    const feeStructuresList = document.getElementById('feeStructuresList');
+    const addFeeStructureForm = document.getElementById('addFeeStructureForm');
+    const newFeeTypeInput = document.getElementById('newFeeType');
+    const newFeeAmountInput = document.getElementById('newFeeAmount');
+
+    function loadFeeStructures() {
+        fetch('/api/fee-structures').then(res => res.json()).then(result => {
+            feeStructuresList.innerHTML = '<ul>';
+            result.data.forEach(fs => {
+                feeStructuresList.innerHTML += `<li>${fs.class_name}: ${fs.fee_type} - ${fs.amount} <button onclick="deleteFeeStructure(${fs.id})">Delete</button></li>`;
+            });
+            feeStructuresList.innerHTML += '</ul>';
+        });
+    }
+    window.deleteFeeStructure = (id) => {
+        if(confirm('Are you sure?')) fetch(`/api/fee-structures/${id}`, { method: 'DELETE' }).then(loadFeeStructures);
+    };
+
+    addFeeStructureForm.onsubmit = (e) => {
+        e.preventDefault();
+        const feeData = { class_id: feeStructureClassIdSelect.value, fee_type: newFeeTypeInput.value, amount: newFeeAmountInput.value };
+        fetch('/api/fee-structures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(feeData) })
+            .then(() => { addFeeStructureForm.reset(); loadFeeStructures(); });
+    };
+
+    loadClasses();
+    loadTeachers();
+    loadFeeStructures();
+});
+</script>
+</body>
+</html>

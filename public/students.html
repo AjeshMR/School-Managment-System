@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students - School Fee Management System</title>
+  <style>
+    body { background: #f9f9f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-content { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 48px; }
+    h2 { color: #34495e; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #ecf0f1; }
+    .add-btn { background: #34495e; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .add-btn:hover { background: #2c3e50; }
+    .topnav {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      background-color: #34495e;
+      padding: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topnav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      outline: none;
+      border-radius: 0;
+    }
+    .topnav button:hover, .topnav button.active {
+      background-color: #2c3e50;
+      color: #ffd700;
+    }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; }
+    .modal-content { background: #fff; padding: 24px 32px; border-radius: 8px; box-shadow: 0 2px 16px rgba(0,0,0,0.2); min-width: 400px; max-width: 90vw; }
+    .modal-content h3 { margin-bottom: 18px; color: #34495e; }
+    .modal-content label { display: block; margin: 10px 0 4px; }
+    .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 7px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-actions button { padding: 7px 16px; border-radius: 4px; border: none; cursor: pointer; }
+    .modal-actions .save-btn { background: #34495e; color: #fff; }
+    .modal-actions .cancel-btn { background: #eee; color: #34495e; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <button onclick="location.href='SFM.html'">Home</button>
+    <button class="active">Students</button>
+    <button onclick="location.href='students_archived.html'">Archived Students</button>
+    <button onclick="location.href='staff.html'">Staff</button>
+    <button onclick="location.href='staff_archived.html'">Archived Staff</button>
+    <button onclick="location.href='classes.html'">Classes</button>
+    <button onclick="location.href='bus.html'">Bus Routes</button>
+    <button onclick="location.href='bus_stops.html'">Bus Stops</button>
+    <button onclick="location.href='fee.html'">Payment</button>
+    <button onclick="location.href='fee_structure.html'">Fee Structure</button>
+  </nav>
+  <div class="main-content">
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+      <h2 style="margin: 0;">Students</h2>
+      <span style="flex:1 1 auto;"></span>
+      <button class="add-btn" id="addStudentBtn">+ Add Student</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Class</th><th>Phone</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <!-- Student rows will be inserted here dynamically -->
+      </tbody>
+    </table>
+
+    <div class="modal" id="studentModal">
+      <div class="modal-content">
+        <h3 id="modalTitle">Add Student</h3>
+        <form id="studentForm">
+          <input type="hidden" id="studentId" name="studentId">
+          <label for="studentName">Name</label>
+          <input type="text" id="studentName" name="studentName" required>
+          <label for="classFilterModal">Class</label>
+          <select id="classFilterModal" name="classFilterModal" required></select>
+          <label for="sectionId">Section</label>
+          <select id="sectionId" name="sectionId" required></select>
+          <label for="studentDob">Date of Birth</label>
+          <input type="date" id="studentDob" name="studentDob">
+          <label for="studentGender">Gender</label>
+          <select id="studentGender" name="studentGender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          <label for="studentPhone">Phone</label>
+          <input type="text" id="studentPhone" name="studentPhone">
+          <label for="parentName">Parent's Name</label>
+          <input type="text" id="parentName" name="parentName">
+          <label for="parentPhone">Parent's Phone</label>
+          <input type="text" id="parentPhone" name="parentPhone">
+          <label for="studentAddress">Address</label>
+          <textarea id="studentAddress" name="studentAddress" rows="3"></textarea>
+          <label for="busStopId">Bus Stop</label>
+          <select id="busStopId" name="busStopId"></select>
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn" id="cancelStudentModal">Cancel</button>
+            <button type="submit" class="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadStudents();
+    loadClassesForModal();
+    loadBusStops();
+});
+
+function loadStudents() {
+    fetch('/api/students')
+        .then(response => response.json())
+        .then(result => {
+            const tbody = document.querySelector('table tbody');
+            tbody.innerHTML = '';
+            result.data.forEach(student => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = student.name;
+                row.insertCell(1).innerText = student.class_name || 'N/A';
+                row.insertCell(2).innerText = student.phone;
+                
+                const actionsCell = row.insertCell(3);
+                const viewBtn = document.createElement('button');
+                viewBtn.innerText = 'View/Edit';
+                viewBtn.onclick = () => openEditModal(student);
+                const archiveBtn = document.createElement('button');
+                archiveBtn.innerText = 'Archive';
+                archiveBtn.onclick = () => archiveStudent(student.id);
+                actionsCell.appendChild(viewBtn);
+                actionsCell.appendChild(archiveBtn);
+            });
+        });
+}
+
+function loadClassesForModal() {
+    fetch('/api/classes').then(res => res.json()).then(result => {
+        const select = document.getElementById('classFilterModal');
+        select.innerHTML = '<option value="">Select a class</option>';
+        result.data.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c.id;
+            option.innerText = c.name;
+            select.appendChild(option);
+        });
+    });
+}
+
+function loadSectionsForModal(classId) {
+    const select = document.getElementById('sectionId');
+    select.innerHTML = '<option value="">Select a section</option>';
+    if (!classId) return;
+    fetch(`/api/sections?class_id=${classId}`).then(res => res.json()).then(result => {
+        result.data.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.innerText = s.section_name;
+            select.appendChild(option);
+        });
+    });
+}
+
+function loadBusStops() {
+    fetch('/api/bus-stops').then(res => res.json()).then(result => {
+        const select = document.getElementById('busStopId');
+        select.innerHTML = '<option value="">Select a bus stop</option>';
+        result.data.forEach(stop => {
+            const option = document.createElement('option');
+            option.value = stop.id;
+            option.innerText = `${stop.stop_name} (${stop.route_name})`;
+            select.appendChild(option);
+        });
+    });
+}
+
+const modal = document.getElementById('studentModal');
+const form = document.getElementById('studentForm');
+const cancelBtn = document.getElementById('cancelStudentModal');
+
+document.getElementById('addStudentBtn').onclick = () => {
+    form.reset();
+    document.getElementById('studentId').value = '';
+    document.getElementById('modalTitle').innerText = 'Add Student';
+    modal.style.display = 'flex';
+};
+
+cancelBtn.onclick = () => {
+    modal.style.display = 'none';
+};
+
+window.onclick = (e) => {
+    if (e.target === modal) {
+        modal.style.display = 'none';
+    }
+};
+
+document.getElementById('classFilterModal').onchange = (e) => {
+    loadSectionsForModal(e.target.value);
+};
+
+function openEditModal(student) {
+    form.reset();
+    document.getElementById('studentId').value = student.id;
+    document.getElementById('studentName').value = student.name;
+    // Need to fetch class_id from section_id
+    fetch(`/api/sections/${student.section_id}`).then(res => res.json()).then(section => {
+        document.getElementById('classFilterModal').value = section.data.class_id;
+        loadSectionsForModal(section.data.class_id).then(() => {
+            document.getElementById('sectionId').value = student.section_id;
+        });
+    });
+    document.getElementById('studentDob').value = student.dob;
+    document.getElementById('studentGender').value = student.gender;
+    document.getElementById('studentPhone').value = student.phone;
+    document.getElementById('parentName').value = student.parent_name;
+    document.getElementById('parentPhone').value = student.parent_phone;
+    document.getElementById('studentAddress').value = student.address;
+    document.getElementById('busStopId').value = student.bus_stop_id;
+    document.getElementById('modalTitle').innerText = 'Edit Student';
+    modal.style.display = 'flex';
+}
+
+function archiveStudent(studentId) {
+    if (confirm('Are you sure you want to archive this student?')) {
+        fetch(`/api/students/${studentId}/archive`, { method: 'PUT' })
+            .then(() => loadStudents());
+    }
+}
+
+form.onsubmit = function(e) {
+    e.preventDefault();
+    const studentId = document.getElementById('studentId').value;
+    const studentData = {
+        name: document.getElementById('studentName').value,
+        section_id: document.getElementById('sectionId').value,
+        dob: document.getElementById('studentDob').value,
+        gender: document.getElementById('studentGender').value,
+        phone: document.getElementById('studentPhone').value,
+        parent_name: document.getElementById('parentName').value,
+        parent_phone: document.getElementById('parentPhone').value,
+        address: document.getElementById('studentAddress').value,
+        bus_stop_id: document.getElementById('busStopId').value
+    };
+
+    const method = studentId ? 'PUT' : 'POST';
+    const url = studentId ? `/api/students/${studentId}` : '/api/students';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(studentData)
+    }).then(() => {
+        modal.style.display = 'none';
+        loadStudents();
+    });
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bus Routes - School Fee Management System</title>
+  <style>
+    body { background: #f9f9f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-content { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 48px; }
+    h2 { color: #34495e; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #ecf0f1; }
+    .add-btn { background: #34495e; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .add-btn:hover { background: #2c3e50; }
+    .topnav {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      background-color: #34495e;
+      padding: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topnav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      outline: none;
+      border-radius: 0;
+    }
+    .topnav button:hover, .topnav button.active {
+      background-color: #2c3e50;
+      color: #ffd700;
+    }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; }
+    .modal-content { background: #fff; padding: 24px 32px; border-radius: 8px; box-shadow: 0 2px 16px rgba(0,0,0,0.2); min-width: 320px; max-width: 90vw; }
+    .modal-content h3 { margin-bottom: 18px; color: #34495e; }
+    .modal-content label { display: block; margin: 10px 0 4px; }
+    .modal-content input, .modal-content select { width: 100%; padding: 7px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-actions button { padding: 7px 16px; border-radius: 4px; border: none; cursor: pointer; }
+    .modal-actions .save-btn { background: #34495e; color: #fff; }
+    .modal-actions .cancel-btn { background: #eee; color: #34495e; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <button onclick="location.href='SFM.html'">Home</button>
+    <button onclick="location.href='students.html'">Students</button>
+    <button onclick="location.href='students_archived.html'">Archived Students</button>
+    <button onclick="location.href='staff.html'">Staff</button>
+    <button onclick="location.href='staff_archived.html'">Archived Staff</button>
+    <button onclick="location.href='classes.html'">Classes</button>
+    <button class="active">Bus Routes</button>
+    <button onclick="location.href='bus_stops.html'">Bus Stops</button>
+    <button onclick="location.href='fee.html'">Payment</button>
+    <button onclick="location.href='fee_structure.html'">Fee Structure</button>
+  </nav>
+  <div class="main-content">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+      <h2 style="margin: 0;">Bus Routes</h2>
+      <button class="add-btn" id="addBusBtn">+ Add Route</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Route Name</th><th>Driver</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <!-- Bus rows will be inserted here dynamically -->
+      </tbody>
+    </table>
+
+    <div class="modal" id="busModal">
+      <div class="modal-content">
+        <h3 id="modalTitle">Add Bus Route</h3>
+        <form id="busForm">
+          <input type="hidden" id="busId" name="busId">
+          <label for="routeName">Route Name</label>
+          <input type="text" id="routeName" name="routeName" required>
+          <label for="driverId">Driver</label>
+          <select id="driverId" name="driverId" required>
+            <!-- Driver options will be populated here -->
+          </select>
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn" id="cancelBusModal">Cancel</button>
+            <button type="submit" class="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadBusRoutes();
+    loadDrivers();
+});
+
+function loadBusRoutes() {
+    fetch('/api/bus-routes')
+        .then(response => response.json())
+        .then(result => {
+            const tbody = document.querySelector('table tbody');
+            tbody.innerHTML = '';
+            result.data.forEach(route => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = route.route_name;
+                row.insertCell(1).innerText = route.driver_name || 'N/A';
+                
+                const actionsCell = row.insertCell(2);
+                const editBtn = document.createElement('button');
+                editBtn.innerText = 'Edit';
+                editBtn.onclick = () => openEditModal(route);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerText = 'Delete';
+                deleteBtn.onclick = () => deleteBusRoute(route.id);
+                actionsCell.appendChild(editBtn);
+                actionsCell.appendChild(deleteBtn);
+            });
+        });
+}
+
+function loadDrivers() {
+    fetch('/api/staff')
+        .then(response => response.json())
+        .then(result => {
+            const select = document.getElementById('driverId');
+            select.innerHTML = '<option value="">Select a driver</option>';
+            result.data.forEach(staff => {
+                if (staff.role.toLowerCase() === 'driver') {
+                    const option = document.createElement('option');
+                    option.value = staff.id;
+                    option.innerText = staff.name;
+                    select.appendChild(option);
+                }
+            });
+        });
+}
+
+const modal = document.getElementById('busModal');
+const form = document.getElementById('busForm');
+const cancelBtn = document.getElementById('cancelBusModal');
+
+document.getElementById('addBusBtn').onclick = () => {
+    form.reset();
+    document.getElementById('busId').value = '';
+    document.getElementById('modalTitle').innerText = 'Add Bus Route';
+    modal.style.display = 'flex';
+};
+
+cancelBtn.onclick = () => {
+    modal.style.display = 'none';
+};
+
+window.onclick = (e) => {
+    if (e.target === modal) {
+        modal.style.display = 'none';
+    }
+};
+
+function openEditModal(route) {
+    form.reset();
+    document.getElementById('busId').value = route.id;
+    document.getElementById('routeName').value = route.route_name;
+    document.getElementById('driverId').value = route.driver_id;
+    document.getElementById('modalTitle').innerText = 'Edit Bus Route';
+    modal.style.display = 'flex';
+}
+
+function deleteBusRoute(routeId) {
+    if (confirm('Are you sure you want to delete this bus route?')) {
+        fetch(`/api/bus-routes/${routeId}`, { method: 'DELETE' })
+            .then(() => loadBusRoutes());
+    }
+}
+
+form.onsubmit = function(e) {
+    e.preventDefault();
+    const busId = document.getElementById('busId').value;
+    const busData = {
+        route_name: document.getElementById('routeName').value,
+        driver_id: document.getElementById('driverId').value
+    };
+
+    const method = busId ? 'PUT' : 'POST';
+    const url = busId ? `/api/bus-routes/${busId}` : '/api/bus-routes';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(busData)
+    }).then(() => {
+        modal.style.display = 'none';
+        loadBusRoutes();
+    });
+};
+</script>
+</body>
+</html>

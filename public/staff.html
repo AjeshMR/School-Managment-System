@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff - School Fee Management System</title>
+  <style>
+    body { background: #f9f9f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-content { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 48px; }
+    h2 { color: #34495e; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #ecf0f1; }
+    .add-btn { background: #34495e; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .add-btn:hover { background: #2c3e50; }
+    .topnav {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      background-color: #34495e;
+      padding: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topnav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      outline: none;
+      border-radius: 0;
+    }
+    .topnav button:hover, .topnav button.active {
+      background-color: #2c3e50;
+      color: #ffd700;
+    }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; }
+    .modal-content { background: #fff; padding: 24px 32px; border-radius: 8px; box-shadow: 0 2px 16px rgba(0,0,0,0.2); min-width: 400px; max-width: 90vw; }
+    .modal-content h3 { margin-bottom: 18px; color: #34495e; }
+    .modal-content label { display: block; margin: 10px 0 4px; }
+    .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 7px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-actions button { padding: 7px 16px; border-radius: 4px; border: none; cursor: pointer; }
+    .modal-actions .save-btn { background: #34495e; color: #fff; }
+    .modal-actions .cancel-btn { background: #eee; color: #34495e; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <button onclick="location.href='SFM.html'">Home</button>
+    <button onclick="location.href='students.html'">Students</button>
+    <button onclick="location.href='students_archived.html'">Archived Students</button>
+    <button class="active">Staff</button>
+    <button onclick="location.href='staff_archived.html'">Archived Staff</button>
+    <button onclick="location.href='classes.html'">Classes</button>
+    <button onclick="location.href='bus.html'">Bus Routes</button>
+    <button onclick="location.href='bus_stops.html'">Bus Stops</button>
+    <button onclick="location.href='fee.html'">Payment</button>
+    <button onclick="location.href='fee_structure.html'">Fee Structure</button>
+  </nav>
+  <div class="main-content">
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+        <h2 style="margin: 0;">Staff</h2>
+        <span style="flex:1 1 auto;"></span>
+        <button class="add-btn" id="addStaffBtn">+ Add Staff</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Role</th><th>Phone</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <!-- Staff rows will be inserted here dynamically -->
+      </tbody>
+    </table>
+
+    <div class="modal" id="staffModal">
+      <div class="modal-content">
+        <h3 id="modalTitle">Add Staff</h3>
+        <form id="staffForm">
+          <input type="hidden" id="staffId" name="staffId">
+          <label for="staffName">Name</label>
+          <input type="text" id="staffName" name="staffName" required>
+          <label for="staffRole">Role</label>
+          <select id="staffRole" name="staffRole" required>
+            <option value="">Select a role</option>
+            <option value="Teacher">Teacher</option>
+            <option value="Driver">Driver</option>
+            <option value="Principal">Principal</option>
+            <option value="Admin">Admin</option>
+            <option value="Other">Other</option>
+          </select>
+          <label for="staffPhone">Phone</label>
+          <input type="text" id="staffPhone" name="staffPhone">
+          <label for="staffDob">Date of Birth</label>
+          <input type="date" id="staffDob" name="staffDob">
+          <label for="staffGender">Gender</label>
+          <select id="staffGender" name="staffGender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          <label for="staffAddress">Address</label>
+          <textarea id="staffAddress" name="staffAddress" rows="3"></textarea>
+          <label for="staffHireDate">Hire Date</label>
+          <input type="date" id="staffHireDate" name="staffHireDate">
+          <label for="staffQualifications">Qualifications</label>
+          <textarea id="staffQualifications" name="staffQualifications" rows="3"></textarea>
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn" id="cancelStaffModal">Cancel</button>
+            <button type="submit" class="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadStaff();
+    loadRoles();
+});
+
+function loadStaff() {
+    fetch('/api/staff')
+        .then(response => response.json())
+        .then(result => {
+            const tbody = document.querySelector('table tbody');
+            tbody.innerHTML = ''; // Clear existing rows
+            result.data.forEach(staff => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = staff.name;
+                row.insertCell(1).innerText = staff.role_name;
+                row.insertCell(2).innerText = staff.phone;
+                
+                const actionsCell = row.insertCell(3);
+                const editBtn = document.createElement('button');
+                editBtn.innerText = 'Edit';
+                editBtn.onclick = () => openEditModal(staff);
+                const archiveBtn = document.createElement('button');
+                archiveBtn.innerText = 'Archive';
+                archiveBtn.onclick = () => archiveStaff(staff.id);
+                actionsCell.appendChild(editBtn);
+                actionsCell.appendChild(archiveBtn);
+            });
+        });
+}
+
+function loadRoles() {
+    fetch('/api/staff-roles').then(res => res.json()).then(result => {
+        const select = document.getElementById('staffRoleId');
+        select.innerHTML = '<option value="">Select a role</option>';
+        result.data.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role.id;
+            option.textContent = role.role_name;
+            select.appendChild(option);
+        });
+    });
+}
+
+const modal = document.getElementById('staffModal');
+const form = document.getElementById('staffForm');
+const cancelBtn = document.getElementById('cancelStaffModal');
+
+document.getElementById('addStaffBtn').onclick = () => {
+    form.reset();
+    document.getElementById('staffId').value = '';
+    document.getElementById('modalTitle').innerText = 'Add Staff';
+    modal.style.display = 'flex';
+};
+
+cancelBtn.onclick = () => {
+    modal.style.display = 'none';
+};
+
+window.onclick = (e) => {
+    if (e.target === modal) {
+        modal.style.display = 'none';
+    }
+};
+
+function openEditModal(staff) {
+    form.reset();
+    document.getElementById('staffId').value = staff.id;
+    document.getElementById('staffName').value = staff.name;
+    document.getElementById('staffRoleId').value = staff.role_id;
+    document.getElementById('staffPhone').value = staff.phone;
+    document.getElementById('staffDob').value = staff.dob;
+    document.getElementById('staffGender').value = staff.gender;
+    document.getElementById('staffAddress').value = staff.address;
+    document.getElementById('staffHireDate').value = staff.hire_date;
+    document.getElementById('staffQualifications').value = staff.qualifications;
+    document.getElementById('modalTitle').innerText = 'Edit Staff';
+    modal.style.display = 'flex';
+}
+
+function archiveStaff(staffId) {
+    if (confirm('Are you sure you want to archive this staff member?')) {
+        fetch(`/api/staff/${staffId}/archive`, { method: 'PUT' })
+            .then(() => loadStaff());
+    }
+}
+
+form.onsubmit = function(e) {
+    e.preventDefault();
+    const staffId = document.getElementById('staffId').value;
+    const staffData = {
+        name: document.getElementById('staffName').value,
+        role_id: document.getElementById('staffRoleId').value,
+        phone: document.getElementById('staffPhone').value,
+        dob: document.getElementById('staffDob').value,
+        gender: document.getElementById('staffGender').value,
+        address: document.getElementById('staffAddress').value,
+        hire_date: document.getElementById('staffHireDate').value,
+        qualifications: document.getElementById('staffQualifications').value
+    };
+
+    const method = staffId ? 'PUT' : 'POST';
+    const url = staffId ? `/api/staff/${staffId}` : '/api/staff';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(staffData)
+    }).then(() => {
+        modal.style.display = 'none';
+        loadStaff();
+    });
+};
+</script>
+</body>
+</html>
